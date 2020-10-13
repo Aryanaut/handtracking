@@ -1,7 +1,11 @@
 import cv2
 import dlib
 import numpy as np
+import pyautogui
+import mouse
 
+
+pyautogui.FAILSAFE = False
 '''
 Pointing camera at my white desk
 Trying to detect my hand through contour method
@@ -13,6 +17,15 @@ def nothing(x):
 cap = cv2.VideoCapture(0)
 cv2.namedWindow('frame')
 cv2.createTrackbar('threshold', 'frame', 102, 255, nothing)
+h, w = (480, 640)
+h1, w1 = (1080, 1920)
+test = np.zeros((1080, 1920, 3), np.uint8)
+centerPos = (320, 240)
+
+listofCoords = [(960, 540)]
+count = 1
+ratioX = (w1/centerPos[0])
+ratioY = (h1/centerPos[1])
 
 while True:
     ret, frame = cap.read()
@@ -27,19 +40,43 @@ while True:
     if len(cont) > 0:
         cv2.drawContours(frame, cont, -1, (0, 0, 255), 3)
         # print('detected')
-        c = max(cont, key = cv2.contourArea)
-        x, y, w, h = cv2.boundingRect(c)
+        contL= max(cont, key = cv2.contourArea)
+        x, y, w, h = cv2.boundingRect(contL)
         hull = []
+        hull_drawn = cv2.convexHull(contL, False)
         for i in range(len(cont)):
-            hull.append(cv2.convexHull(cont[i], False))
+            hull.append(cv2.convexHull(contL, returnPoints=False))
+            defects = cv2.convexityDefects(contL, hull[i])
+            # print(len(hull[i]))
+            if defects is not None:
+                cnt = 0
+                for defect in range(defects.shape[0]):
+                    # cv2.line(frame, start, end, [0, 255, 0], 2)
+                    topmost = tuple(contL[contL[:,:,1].argmin()][0])
+                    bottommost = tuple(contL[contL[:,:,1].argmax()][0])
+                    cv2.circle(frame, bottommost, 5, (255, 0, 0), -1)
+                    x1 = bottommost[0]
+                    y1 = bottommost[1]
+                    px=x1*ratioX/2
+                    py=y1*ratioY/1.5
+                    coords = (int(px), int(py))
+                    listofCoords.append(coords)
+                    cv2.line(test, listofCoords[count-1], listofCoords[count], (255, 100, 0), 3)
+                    #cv2.circle(test, coords, 3, (0, 255, 0), -1)
+                    count += 1
+                    
+            else:
+                pass
 
-            cv2.drawContours(frame, hull, i, (0, 255, 0), 3)
+        # ctr = np.array(hull[0]).reshape((-1, 1, 2)).astype(np.int32)
+        cv2.drawContours(frame, [hull_drawn], -1, (0, 255, 0), 3)
 
         # cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
     else:
         pass
     cv2.imshow('edged', edgedThr)
     cv2.imshow('frame', frame)
+    cv2.imshow('test', test)
     if cv2.waitKey(1) & 0xff == ord('q'):
         break
 
