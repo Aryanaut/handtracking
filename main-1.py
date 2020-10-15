@@ -2,17 +2,23 @@ import cv2
 import dlib
 import numpy as np
 import pyautogui
-import mouse
+from pynput.mouse import Controller, Button
 
-
-pyautogui.FAILSAFE = False
-cv2.namedWindow('test')
-test = np.zeros((1080, 1920, 3), np.uint8)
 '''
 Pointing camera at my white desk
 Trying to detect my hand through contour method
 Convex hull also drawn
+
+Update:
+I can draw with my hand now!
 '''
+
+mouse = Controller()
+
+pyautogui.FAILSAFE = False
+cv2.namedWindow('test')
+test = np.zeros((1080, 1920, 3), np.uint8)
+
 def nothing(x):
     pass
 
@@ -71,6 +77,10 @@ while True:
                         coords = (int(px), int(py))
                         listofCoords.append(coords)
                         cv2.line(test, listofCoords[count-1], listofCoords[count], (255, 100, 0), 3)
+
+                        mouse.position = (coords[0], coords[1])
+                        if mouse.position!=(coords[0], coords[1]):
+                            pass
                         #cv2.circle(test, coords, 3, (0, 255, 0), -1)
                         count += 1
                         
